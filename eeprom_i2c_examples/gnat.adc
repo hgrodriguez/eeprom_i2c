@@ -1,0 +1,9 @@
+pragma Warnings (On);
+pragma Warnings ("u");
+--  see: https://www.cs.fsu.edu/~baker/ada/gnat/html/gnat_ugn_4.html#SEC48
+pragma Style_Checks ("y"); -- switch it on
+pragma Style_Checks ("g-d"); -- switch it on
+pragma Style_Checks ("m"); -- max line length is 79
+pragma Style_Checks ("O"); --  Overriding subprograms must be explicitly marked
+pragma Style_Checks ("t"); --  Check token spacing
+pragma Style_Checks ("x"); --  Check extra parantheses

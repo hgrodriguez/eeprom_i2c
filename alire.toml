@@ -1,0 +1,11 @@
+name = "eeprom_i2c"
+description = "Shiny new project"
+version = "0.0.0"
+
+authors = ["Holger Rodriguez"]
+maintainers = ["Holger Rodriguez <github@roseng.ch>"]
+maintainers-logins = ["hgrodriguez"]
+[[depends-on]]  # Added by alr
+hal = "~0.1.0"  # Added by alr
+[[depends-on]]  # Added by alr
+rp2040_hal = "^1.2.1"  # Added by alr
