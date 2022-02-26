@@ -1,33 +1,33 @@
 with HAL.I2C;
 
-package EEPROM_I2C.Eight_Bits.MC24XX01 is
+package EEPROM_I2C.MC24XX01 is
 
-   type EEPROM_Memory_8Bits_MC24XX01 is new EEPROM_Memory_8Bits with private;
+   type EEPROM_Memory_MC24XX01 is new EEPROM_Memory with private;
 
    function Create (I2C_Port : not null HAL.I2C.Any_I2C_Port;
-                    I2C_Addr : HAL.I2C.I2C_Address) return EEPROM_Memory_8Bits_MC24XX01;
+                    I2C_Addr : HAL.I2C.I2C_Address) return EEPROM_Memory_MC24XX01;
 
    overriding
-   function Address_Size (This : in out EEPROM_Memory_8Bits_MC24XX01)
+   function Address_Size (This : in out EEPROM_Memory_MC24XX01)
                           return HAL.I2C.I2C_Memory_Address_Size;
    overriding
-   function Size_In_Bytes (This : in out EEPROM_Memory_8Bits_MC24XX01)
+   function Size_In_Bytes (This : in out EEPROM_Memory_MC24XX01)
                            return HAL.UInt32;
 
    overriding
-   function Size_In_Bits (This : in out EEPROM_Memory_8Bits_MC24XX01)
+   function Size_In_Bits (This : in out EEPROM_Memory_MC24XX01)
                           return HAL.UInt32;
 
    overriding
-   function Number_Of_Pages (This : in out EEPROM_Memory_8Bits_MC24XX01)
+   function Number_Of_Pages (This : in out EEPROM_Memory_MC24XX01)
                              return HAL.UInt16;
 
    overriding
-   function Bytes_Per_Page (This : in out EEPROM_Memory_8Bits_MC24XX01)
+   function Bytes_Per_Page (This : in out EEPROM_Memory_MC24XX01)
                             return HAL.UInt16;
 
 private
-   type EEPROM_Memory_8Bits_MC24XX01 is new EEPROM_Memory_8Bits with record
+   type EEPROM_Memory_MC24XX01 is new EEPROM_Memory with record
       Size           : HAL.I2C.I2C_Memory_Address_Size := HAL.I2C.Memory_Size_8b;
       Size_In_Bytes  : HAL.UInt32 := 128;
       Size_In_Bits   : HAL.UInt32 := 1024;
@@ -35,5 +35,4 @@ private
       Bytes_Per_Page : HAL.UInt16 := 8;
    end record;
 
-
-end EEPROM_I2C.Eight_Bits.MC24XX01;
+end EEPROM_I2C.MC24XX01;

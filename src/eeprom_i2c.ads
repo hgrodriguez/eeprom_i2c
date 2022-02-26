@@ -12,7 +12,7 @@ with RP.I2C_Master;
 
 package EEPROM_I2C is
 
-   type EEPROM_Chip is (MC24XX01);
+   type EEPROM_Chip is (EEC_MC24XX01);
 
    use HAL;
 
@@ -35,33 +35,52 @@ package EEPROM_I2C is
    type EEPROM_Memory is abstract tagged private;
    type Any_EEPROM_Memory is access all EEPROM_Memory'Class;
 
-   type EEPROM_Status is (Ok, I2C_Not_Ok, Address_Out_Of_Range);
+   type EEPROM_Status is (Ok, Address_Out_Of_Range, I2C_Not_Ok);
    type EEPROM_Record is record
       E_Status   : EEPROM_Status;
       I2C_Status : HAL.I2C.I2C_Status;
    end record;
 
-   type EEPROM_Write is not null access
-     procedure (This          : in out EEPROM_Memory;
-                Mem_Addr      : HAL.UInt16;
-                Data          : HAL.I2C.I2C_Data;
-                Status        : out EEPROM_Record;
-                Timeout       : Natural := 1000);
+   function Address_Size (This : in out EEPROM_Memory)
+                          return HAL.I2C.I2C_Memory_Address_Size is abstract;
 
-   type EEPROM_Read is not null access
-     procedure (This          : in out EEPROM_Memory;
-                Mem_Addr      : HAL.UInt16;
-                Data          : out HAL.I2C.I2C_Data;
-                Status        : out EEPROM_Record;
-                Timeout       : Natural := 1000);
+   function Size_In_Bytes (This : in out EEPROM_Memory)
+                           return HAL.UInt32 is abstract;
 
-   function Size_In_Bytes (This : in out EEPROM_Memory) return HAL.UInt32 is abstract;
+   function Size_In_Bits (This : in out EEPROM_Memory)
+                          return HAL.UInt32 is abstract;
 
-   private
+   function Number_Of_Pages (This : in out EEPROM_Memory)
+                             return HAL.UInt16 is abstract;
+
+   function Bytes_Per_Page (This : in out EEPROM_Memory)
+                            return HAL.UInt16 is abstract;
+
+   procedure Read (This     : in out EEPROM_Memory;
+                   Mem_Addr : HAL.UInt16;
+                   Data     : out HAL.I2C.I2C_Data;
+                   Status   : out EEPROM_Record;
+                   Timeout  : Natural := 1000);
+
+   procedure Write (This     : in out EEPROM_Memory;
+                    Mem_Addr : HAL.UInt16;
+                    Data     : HAL.I2C.I2C_Data;
+                    Status   : out EEPROM_Record;
+                    Timeout  : Natural := 1000);
+
+private
    type EEPROM_Memory is abstract tagged record
-         Chip : EEPROM_Chip;
-         Port : HAL.I2C.Any_I2C_Port;
-         Addr : HAL.I2C.I2C_Address;
-      end record;
+      Chip : EEPROM_Chip;
+      Port : HAL.I2C.Any_I2C_Port;
+      Addr : HAL.I2C.I2C_Address;
+   end record;
+
+   -----------------------------------------------------------------------------
+   --  Simulating a super() from other OO languages
+   --  Sets all the, at this level, known attributes
+   procedure Super (This : in out EEPROM_Memory;
+                    Chip : EEPROM_Chip;
+                    Port : HAL.I2C.Any_I2C_Port;
+                    Addr : HAL.I2C.I2C_Address);
 
 end EEPROM_I2C;
