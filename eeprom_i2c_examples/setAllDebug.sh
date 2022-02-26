@@ -1,0 +1,9 @@
+export ATOMIC_BUILD_MODE=debug
+export PICO_BSP_BUILD_MODE=debug
+export EDC_CLIENT_BUILD_MODE=debug
+export EEPROM_I2C_BUILD_MODE=debug
+export CORTEXM_BUILD_MODE=debug
+export CORTEXM_BUILD_MODE=debug
+export RP2040_HAL_BUILD_MODE=debug
+export BBQUEUE_BUILD_MODE=debug
+export USB_EMBEDDED_BUILD_MODE=debug

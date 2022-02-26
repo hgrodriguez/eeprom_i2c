@@ -1,7 +1,5 @@
 with HAL.I2C;
 
-with EEPROM_I2C.Eight_Bits.MC24XX01;
-
 package body EEPROM_I2C is
 
    function Write_Byte (This : in out RP.I2C_Master.I2C_Master_Port;

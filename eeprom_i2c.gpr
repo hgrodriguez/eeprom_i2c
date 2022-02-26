@@ -23,7 +23,7 @@ project Eeprom_I2c is
    Contracts_Checks : Enabled_Kind := External ("EEPROM_I2C_CONTRACTS", "disabled");
 
    type Build_Kind is ("debug", "optimize");
-   Build_Mode : Build_Kind := External ("EEPROM_I2C_BUILD_MODE", "optimize");
+   Build_Mode : Build_Kind := External ("EEPROM_I2C_BUILD_MODE", "debug");
 
    Compile_Checks_Switches := ();
    case Compile_Checks is

@@ -18,10 +18,12 @@ with Pico;
 
 with EEPROM_I2C.MC24XX01;
 
-procedure Read_One_Byte is
+procedure Write_One_Byte is
 
    procedure Initialize;
-   procedure Read_OO_Mode;
+   procedure Write_OO_Mode;
+   procedure Wait_For_Trigger_Fired;
+   procedure Wait_For_Trigger_Resume;
 
    --  Address of the EEPROM device:
    --    16#50# ( * 2 = 16#A0#, as HAL.I2C includes the R / W bit)
@@ -34,6 +36,8 @@ procedure Read_One_Byte is
    MY_ADDR      : constant HAL.UInt16 := 37;
    Read_Data    : HAL.I2C.I2C_Data (0 .. 0);
    My_Byte      : HAL.UInt8;
+
+   Write_Data    : constant HAL.I2C.I2C_Data (0 .. 0) := (0 => 16#A5#);
 
    --  Trigger button when to read the byte from the EEPROM
    --  This trigger is generated using a function generator
@@ -71,24 +75,46 @@ procedure Read_One_Byte is
 
    end Initialize;
 
-   procedure Read_OO_Mode is
+   procedure Wait_For_Trigger_Fired is
+   begin
+      loop
+         Button_State := RP.GPIO.Get (Button);
+         exit when Button_State;
+      end loop;
+   end Wait_For_Trigger_Fired;
+
+   procedure Wait_For_Trigger_Resume is
+   begin
+      loop
+         Button_State := RP.GPIO.Get (Button);
+         exit when not Button_State;
+      end loop;
+   end Wait_For_Trigger_Resume;
+
+   procedure Write_OO_Mode is
       Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01;
       Status : EEPROM_I2C.EEPROM_Record;
    begin
       Eeprom := EEPROM_I2C
-        .MC24XX01
+          .MC24XX01
             .Create (I2C_Port => Eeprom_I2C_Port'Access,
                      I2C_Addr => Eeprom_I2C_address);
+
+      Wait_For_Trigger_Fired;
+
+      Eeprom.Write (Mem_Addr => MY_ADDR,
+                    Data     => Write_Data,
+                    Status   => Status,
+                    Timeout  => 0);
+
+      Wait_For_Trigger_Resume;
+
       --  read indefinitely to watch the oscilloscope
       loop
          --  just some visual help
          Pico.LED.Clear;
 
-         --  wait for the trigger to hit to start the read
-         loop
-            Button_State := RP.GPIO.Get (Button);
-            exit when Button_State;
-         end loop;
+         Wait_For_Trigger_Fired;
          --  just some visual help
          Pico.LED.Set;
 
@@ -102,15 +128,12 @@ procedure Read_One_Byte is
          My_Byte := Read_Data (0);
 
          --  wait for the trigger to release to read another cycle
-         loop
-            Button_State := RP.GPIO.Get (Button);
-            exit when not Button_State;
-         end loop;
+         Wait_For_Trigger_Resume;
          --  just some visual help
          Pico.LED.Clear;
 
       end loop;
-   end Read_OO_Mode;
+   end Write_OO_Mode;
 
 begin
    Initialize;
@@ -118,6 +141,6 @@ begin
    --  just some visual help
    Pico.LED.Set;
 
-   Read_OO_Mode;
+   Write_OO_Mode;
 
-end Read_One_Byte;
+end Write_One_Byte;
