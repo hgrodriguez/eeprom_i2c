@@ -25,10 +25,6 @@ procedure Write_One_Byte is
    procedure Wait_For_Trigger_Fired;
    procedure Wait_For_Trigger_Resume;
 
-   --  Address of the EEPROM device:
-   --    16#50# ( * 2 = 16#A0#, as HAL.I2C includes the R / W bit)
-   Eeprom_I2C_address : constant HAL.I2C.I2C_Address := 2#1010_0000#;
-
    --  Definitions of the connections to the EEPROM
    Eeprom_I2C_Port : RP.I2C_Master.I2C_Master_Port renames RP.Device.I2C_0;
 
@@ -93,12 +89,11 @@ procedure Write_One_Byte is
 
    procedure Write_OO_Mode is
       Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01;
-      Status : EEPROM_I2C.EEPROM_Record;
+      Status : EEPROM_I2C.EEPROM_Operation_Result;
    begin
       Eeprom := EEPROM_I2C
           .MC24XX01
-            .Create (I2C_Port => Eeprom_I2C_Port'Access,
-                     I2C_Addr => Eeprom_I2C_address);
+            .Create (I2C_Port => Eeprom_I2C_Port'Access);
 
       Wait_For_Trigger_Fired;
 

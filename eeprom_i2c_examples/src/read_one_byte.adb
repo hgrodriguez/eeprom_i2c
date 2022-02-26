@@ -73,7 +73,7 @@ procedure Read_One_Byte is
 
    procedure Read_OO_Mode is
       Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01;
-      Status : EEPROM_I2C.EEPROM_Record;
+      Status : EEPROM_I2C.EEPROM_Operation_Result;
    begin
       Eeprom := EEPROM_I2C
         .MC24XX01

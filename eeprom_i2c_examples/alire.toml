@@ -1,10 +1,13 @@
 name = "eeprom_i2c_examples"
 description = "Shiny new project"
 version = "0.0.0"
+licenses = "BSD-3-Clause"
 
 authors = ["Holger Rodriguez"]
 maintainers = ["Holger Rodriguez <github@roseng.ch>"]
 maintainers-logins = ["hgrodriguez"]
+tags = ["embedded", "rp2040"]
+website = "https://github.com/hgrodriguez/eeprom_i2c"
 
 executables = ["eeprom_i2c_examples"]
 [[depends-on]]  # Added by alr
