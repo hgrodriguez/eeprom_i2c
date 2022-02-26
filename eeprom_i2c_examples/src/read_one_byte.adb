@@ -21,11 +21,7 @@ with EEPROM_I2C.MC24XX01;
 procedure Read_One_Byte is
 
    procedure Initialize;
-   procedure Read_OO_Mode;
-
-   --  Address of the EEPROM device:
-   --    16#50# ( * 2 = 16#A0#, as HAL.I2C includes the R / W bit)
-   Eeprom_I2C_address : constant HAL.I2C.I2C_Address := 2#1010_0000#;
+   procedure Read_EEPROM;
 
    --  Definitions of the connections to the EEPROM
    Eeprom_I2C_Port : RP.I2C_Master.I2C_Master_Port renames RP.Device.I2C_0;
@@ -71,14 +67,13 @@ procedure Read_One_Byte is
 
    end Initialize;
 
-   procedure Read_OO_Mode is
+   procedure Read_EEPROM is
       Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01;
       Status : EEPROM_I2C.EEPROM_Operation_Result;
    begin
       Eeprom := EEPROM_I2C
         .MC24XX01
-            .Create (I2C_Port => Eeprom_I2C_Port'Access,
-                     I2C_Addr => Eeprom_I2C_address);
+            .Create (I2C_Port => Eeprom_I2C_Port'Access);
       --  read indefinitely to watch the oscilloscope
       loop
          --  just some visual help
@@ -110,7 +105,7 @@ procedure Read_One_Byte is
          Pico.LED.Clear;
 
       end loop;
-   end Read_OO_Mode;
+   end Read_EEPROM;
 
 begin
    Initialize;
@@ -118,6 +113,6 @@ begin
    --  just some visual help
    Pico.LED.Set;
 
-   Read_OO_Mode;
+   Read_EEPROM;
 
 end Read_One_Byte;

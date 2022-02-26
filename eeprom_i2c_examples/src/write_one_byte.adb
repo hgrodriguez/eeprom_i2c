@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------------
---  Implementation of reading one byte from an EEPROM using I2C
+--  Implementation of writing one byte from an EEPROM using I2C
 --
 --  Copyright 2022 (C) Holger Rodriguez
 --
@@ -21,7 +21,7 @@ with EEPROM_I2C.MC24XX01;
 procedure Write_One_Byte is
 
    procedure Initialize;
-   procedure Write_OO_Mode;
+   procedure Write_EEPROM;
    procedure Wait_For_Trigger_Fired;
    procedure Wait_For_Trigger_Resume;
 
@@ -87,7 +87,7 @@ procedure Write_One_Byte is
       end loop;
    end Wait_For_Trigger_Resume;
 
-   procedure Write_OO_Mode is
+   procedure Write_EEPROM is
       Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01;
       Status : EEPROM_I2C.EEPROM_Operation_Result;
    begin
@@ -128,7 +128,7 @@ procedure Write_One_Byte is
          Pico.LED.Clear;
 
       end loop;
-   end Write_OO_Mode;
+   end Write_EEPROM;
 
 begin
    Initialize;
@@ -136,6 +136,6 @@ begin
    --  just some visual help
    Pico.LED.Set;
 
-   Write_OO_Mode;
+   Write_EEPROM;
 
 end Write_One_Byte;
