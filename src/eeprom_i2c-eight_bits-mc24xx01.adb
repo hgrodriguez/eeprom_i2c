@@ -4,7 +4,7 @@ package body EEPROM_I2C.Eight_Bits.MC24XX01 is
                     I2C_Addr : HAL.I2C.I2C_Address) return EEPROM_Memory_8Bits_MC24XX01 is
       This : EEPROM_Memory_8Bits_MC24XX01;
    begin
-      This.Super (Chip => EEPROM_I2C.MC24XX01,
+      This.Super (Chip => EEPROM_I2C.EEC_MC24XX01,
                   Port => I2C_Port,
                   Addr => I2C_Addr);
       return This;
