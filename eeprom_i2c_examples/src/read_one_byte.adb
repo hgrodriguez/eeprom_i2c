@@ -30,6 +30,7 @@ procedure Read_One_Byte is
    MY_ADDR      : constant HAL.UInt16 := 37;
    Read_Data    : HAL.I2C.I2C_Data (0 .. 0);
    My_Byte      : HAL.UInt8;
+   pragma Warnings (Off, My_Byte);
 
    --  Trigger button when to read the byte from the EEPROM
    --  This trigger is generated using a function generator
@@ -68,12 +69,10 @@ procedure Read_One_Byte is
    end Initialize;
 
    procedure Read_EEPROM is
-      Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01;
+      Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01
+        (Eeprom_I2C_Port'Access);
       Status : EEPROM_I2C.EEPROM_Operation_Result;
    begin
-      Eeprom := EEPROM_I2C
-        .MC24XX01
-            .Create (I2C_Port => Eeprom_I2C_Port'Access);
       --  read indefinitely to watch the oscilloscope
       loop
          --  just some visual help
@@ -88,7 +87,8 @@ procedure Read_One_Byte is
          Pico.LED.Set;
 
          --  read one byte from the EEPROM
-         Eeprom.Read (Mem_Addr => MY_ADDR,
+         EEPROM_I2C.Read (Eeprom,
+                          Mem_Addr => MY_ADDR,
                       Data     => Read_Data,
                       Status   => Status,
                       Timeout  => 0);

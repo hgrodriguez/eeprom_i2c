@@ -32,6 +32,7 @@ procedure Write_One_Byte is
    MY_ADDR      : constant HAL.UInt16 := 37;
    Read_Data    : HAL.I2C.I2C_Data (0 .. 0);
    My_Byte      : HAL.UInt8;
+   pragma Warnings (Off, My_Byte);
 
    Write_Data    : constant HAL.I2C.I2C_Data (0 .. 0) := (0 => 16#A5#);
 
@@ -88,13 +89,10 @@ procedure Write_One_Byte is
    end Wait_For_Trigger_Resume;
 
    procedure Write_EEPROM is
-      Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01;
+      Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01
+        (Eeprom_I2C_Port'Access);
       Status : EEPROM_I2C.EEPROM_Operation_Result;
    begin
-      Eeprom := EEPROM_I2C
-          .MC24XX01
-            .Create (I2C_Port => Eeprom_I2C_Port'Access);
-
       Wait_For_Trigger_Fired;
 
       Eeprom.Write (Mem_Addr => MY_ADDR,

@@ -21,9 +21,23 @@ package EEPROM_I2C is
 
    -----------------------------------------------------------------------------
    --  This is the EEPROM definition.
-   --  We keep it as closed as possible to ensure, that changes have minimal
-   --  ripple effect throughout.
-   type EEPROM_Memory is abstract tagged private;
+   type EEPROM is interface;
+   type Any_EEPROM is access all EEPROM'Class;
+
+   type EEPROM_Memory (      --  which chip is it
+                             Type_of_Chip   : EEPROM_Chip;
+                             Mem_Addr_Size  : HAL.I2C.I2C_Memory_Address_Size;
+                             Size_In_Bytes  : HAL.UInt32;
+                             Size_In_Bits   : HAL.UInt32;
+                             Num_Of_Pages   : HAL.UInt16;
+                             Bytes_Per_Page : HAL.UInt16;
+                             Max_Address    : HAL.UInt16;
+                             --  the address of the EEPROM on the bus
+                             I2C_Addr       : HAL.I2C.I2C_Address;
+                             --  the port where the EEPROM is connected to
+                             I2C_Port       : not null HAL.I2C.Any_I2C_Port
+                            )
+   is new EEPROM with null record;
    type Any_EEPROM_Memory is access all EEPROM_Memory'Class;
 
    -----------------------------------------------------------------------------
@@ -54,32 +68,32 @@ package EEPROM_I2C is
    --  the memory address for being valid or out of range.
    function Is_Valid_Memory_Address (This     : in out EEPROM_Memory;
                                      Mem_Addr : HAL.UInt16)
-                                     return Boolean is abstract;
+                                     return Boolean;
 
    -----------------------------------------------------------------------------
    --  Returns the address size of this specific EEPROM.
    function Address_Size (This : in out EEPROM_Memory)
-                          return HAL.I2C.I2C_Memory_Address_Size is abstract;
+                          return HAL.I2C.I2C_Memory_Address_Size;
 
    -----------------------------------------------------------------------------
    --  Returns the size in bytes of this specific EEPROM.
    function Size_In_Bytes (This : in out EEPROM_Memory)
-                           return HAL.UInt32 is abstract;
+                           return HAL.UInt32;
 
    -----------------------------------------------------------------------------
    --  Returns the size in bits of this specific EEPROM.
    function Size_In_Bits (This : in out EEPROM_Memory)
-                          return HAL.UInt32 is abstract;
+                          return HAL.UInt32;
 
    -----------------------------------------------------------------------------
    --  Returns the number of pages of this specific EEPROM.
    function Number_Of_Pages (This : in out EEPROM_Memory)
-                             return HAL.UInt16 is abstract;
+                             return HAL.UInt16;
 
    -----------------------------------------------------------------------------
    --  Returns the number of bytes per page for this specific EEPROM.
    function Bytes_Per_Page (This : in out EEPROM_Memory)
-                            return HAL.UInt16 is abstract;
+                            return HAL.UInt16;
 
    -----------------------------------------------------------------------------
    --  Reads from the EEPROM memory.
@@ -90,7 +104,7 @@ package EEPROM_I2C is
    --  Timeout : time out in milliseconds can be specified.
    --            If the operation is not finished inside the time frame given,
    --            the operation will fail.
-   procedure Read (This     : in out EEPROM_Memory;
+   procedure Read (This     : in out EEPROM_Memory'Class;
                    Mem_Addr : HAL.UInt16;
                    Data     : out HAL.I2C.I2C_Data;
                    Status   : out EEPROM_Operation_Result;
@@ -105,30 +119,10 @@ package EEPROM_I2C is
    --  Timeout : time out in milliseconds can be specified.
    --            If the operation is not finished inside the time frame given,
    --            the operation will fail.
-   procedure Write (This     : in out EEPROM_Memory;
+   procedure Write (This     : in out EEPROM_Memory'Class;
                     Mem_Addr : HAL.UInt16;
                     Data     : HAL.I2C.I2C_Data;
                     Status   : out EEPROM_Operation_Result;
                     Timeout  : Natural := 1000);
-
-private
-   -----------------------------------------------------------------------------
-   --  Full definition for an EEPROM
-   type EEPROM_Memory is abstract tagged record
-      --  which chip is it
-      Chip : EEPROM_Chip;
-      --  the port where the EEPROM is connected to
-      Port : HAL.I2C.Any_I2C_Port;
-      --  the addres of the EEPROM on the bus
-      Addr : HAL.I2C.I2C_Address;
-   end record;
-
-   -----------------------------------------------------------------------------
-   --  Simulating a super() from other OO languages
-   --  Sets all the, at this level, known components
-   procedure Super (This : in out EEPROM_Memory;
-                    Chip : EEPROM_Chip;
-                    Port : HAL.I2C.Any_I2C_Port;
-                    Addr : HAL.I2C.I2C_Address);
 
 end EEPROM_I2C;
