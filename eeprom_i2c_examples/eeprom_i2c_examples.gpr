@@ -1,3 +1,4 @@
+with "itsybitsy_bsp.gpr";
 with "pico_bsp.gpr";
 with "edc_client.gpr";
 
