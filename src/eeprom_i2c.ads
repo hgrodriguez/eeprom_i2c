@@ -31,7 +31,7 @@ package EEPROM_I2C is
    type EEPROM_Status is (
                           --  all operations were successful
                           Ok,
-                          --  returned, if the requestede memory address of
+                          --  returned, if the requested memory address of
                           --  the EEPROM is out of range.
                           --  In this case, no I2C operation is started
                           Address_Out_Of_Range,
