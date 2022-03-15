@@ -88,9 +88,10 @@ def main():
 ##        LED.value(Button.value())
 
 #####
-#     print("I2C Devices : ")
-#     print(i2c.scan())
+    print("I2C Devices : ")
+    print(i2c.scan())
 
+    return
     MY_ADDR = 37
 #    My_Write_Buffer = b'\x5A'
 

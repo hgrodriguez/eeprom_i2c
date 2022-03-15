@@ -20,23 +20,34 @@ package EEPROM_I2C is
                        );
 
    -----------------------------------------------------------------------------
+   --  Some EEPROMs have a so called t_WC time, which requires a break
+   --  between writes in batches.
+   --  This can be byte or page write cycles.
+   --  As this library should not be tied to any platform,
+   --  The user of the library has to provide the delay procedure
+   type Proc_Delay_Callback_MS is not null access procedure (MS : Integer);
+
+   -----------------------------------------------------------------------------
    --  This is the EEPROM definition.
    type EEPROM is interface;
    type Any_EEPROM is access all EEPROM'Class;
 
-   type EEPROM_Memory (      --  which chip is it
-                             Type_of_Chip   : EEPROM_Chip;
-                             Mem_Addr_Size  : HAL.I2C.I2C_Memory_Address_Size;
-                             Size_In_Bytes  : HAL.UInt32;
-                             Size_In_Bits   : HAL.UInt32;
-                             Num_Of_Pages   : HAL.UInt16;
-                             Bytes_Per_Page : HAL.UInt16;
-                             Max_Address    : HAL.UInt16;
-                             --  the address of the EEPROM on the bus
-                             I2C_Addr       : HAL.I2C.I2C_Address;
-                             --  the port where the EEPROM is connected to
-                             I2C_Port       : not null HAL.I2C.Any_I2C_Port
-                            )
+   type EEPROM_Memory (--  which chip is it
+                       Type_of_Chip        : EEPROM_Chip;
+                       --  the size of addressing the EEPROM
+                       Memory_Address_Size : HAL.I2C.I2C_Memory_Address_Size;
+                       Size_In_Bytes       : HAL.UInt32;
+                       Size_In_Bits        : HAL.UInt32;
+                       Number_Of_Pages     : HAL.UInt16;
+                       Bytes_Per_Page      : HAL.UInt16;
+                       Max_Byte_Address    : HAL.UInt16;
+                       Write_Delay_MS      : Integer;
+                       Delay_Callback      : Proc_Delay_Callback_MS;
+                       --  the address of the EEPROM on the bus
+                       I2C_Addr            : HAL.I2C.I2C_Address;
+                       --  the port where the EEPROM is connected to
+                       I2C_Port            : not null HAL.I2C.Any_I2C_Port
+                      )
    is new EEPROM with null record;
    type Any_EEPROM_Memory is access all EEPROM_Memory'Class;
 
@@ -46,9 +57,15 @@ package EEPROM_I2C is
                           --  all operations were successful
                           Ok,
                           --  returned, if the requested memory address of
-                          --  the EEPROM is out of range.
+                          --  the EEPROM is out of range:
+                          --  Mem_Addr > Mem_Addr_Size
                           --  In this case, no I2C operation is started
                           Address_Out_Of_Range,
+                          --  returned, if the requested data to write is
+                          --  too big.
+                          --  This means, that the relation:
+                          --     Mem_Addr + Data'Size > Size_In_Bytes
+                          Data_Too_Big,
                           --  Is set,
                           --  if anything is not OK with the I2C operation
                           I2C_Not_Ok
@@ -72,8 +89,8 @@ package EEPROM_I2C is
 
    -----------------------------------------------------------------------------
    --  Returns the address size of this specific EEPROM.
-   function Address_Size (This : in out EEPROM_Memory)
-                          return HAL.I2C.I2C_Memory_Address_Size;
+   function Mem_Addr_Size (This : in out EEPROM_Memory)
+                           return HAL.I2C.I2C_Memory_Address_Size;
 
    -----------------------------------------------------------------------------
    --  Returns the size in bytes of this specific EEPROM.
@@ -97,32 +114,38 @@ package EEPROM_I2C is
 
    -----------------------------------------------------------------------------
    --  Reads from the EEPROM memory.
-   --  Mem_Addr: address to start the reading from
-   --  Data    : storage to put the read data into
-   --            the size of this array implies the number of bytes read
-   --  Status  : status of the operation -> see above for details
-   --  Timeout : time out in milliseconds can be specified.
-   --            If the operation is not finished inside the time frame given,
-   --            the operation will fail.
-   procedure Read (This     : in out EEPROM_Memory'Class;
-                   Mem_Addr : HAL.UInt16;
-                   Data     : out HAL.I2C.I2C_Data;
-                   Status   : out EEPROM_Operation_Result;
-                   Timeout  : Natural := 1000);
+   --  Mem_Addr   : address to start the reading from
+   --  Data       : storage to put the read data into
+   --               the size of this array implies the number of bytes read
+   --  Status     : status of the operation -> see above for details
+   --  Timeout_MS : time out in milliseconds can be specified.
+   --               If the operation is not finished inside the
+   --               time frame given, the operation will fail.
+   procedure Read (This       : in out EEPROM_Memory'Class;
+                   Mem_Addr   : HAL.UInt16;
+                   Data       : out HAL.I2C.I2C_Data;
+                   Status     : out EEPROM_Operation_Result;
+                   Timeout_MS : Natural := 1000);
 
    -----------------------------------------------------------------------------
    --  Writes from the EEPROM memory.
-   --  Mem_Addr: address to start the writing from
-   --  Data    : storage to pull the write data from
-   --            the size of this array implies the number of bytes written
-   --  Status  : status of the operation -> see above for details
-   --  Timeout : time out in milliseconds can be specified.
-   --            If the operation is not finished inside the time frame given,
-   --            the operation will fail.
-   procedure Write (This     : in out EEPROM_Memory'Class;
-                    Mem_Addr : HAL.UInt16;
-                    Data     : HAL.I2C.I2C_Data;
-                    Status   : out EEPROM_Operation_Result;
-                    Timeout  : Natural := 1000);
+   --  Mem_Addr   : address to start the writing from
+   --  Data       : storage to pull the write data from
+   --               the size of this array implies the number of bytes written
+   --  Status     : status of the operation -> see above for details
+   --  Timeout_MS : time out in milliseconds can be specified.
+   --               If the operation is not finished inside the
+   --               time frame given, the operation will fail.
+   procedure Write (This       : in out EEPROM_Memory'Class;
+                    Mem_Addr   : HAL.UInt16;
+                    Data       : HAL.I2C.I2C_Data;
+                    Status     : out EEPROM_Operation_Result;
+                    Timeout_MS : Natural := 1000);
+
+   -----------------------------------------------------------------------------
+   --  Wipes the EEPROM memory.
+   --  Status : status of the operation -> see above for details
+   procedure Wipe (This   : in out EEPROM_Memory'Class;
+                   Status : out EEPROM_Operation_Result);
 
 end EEPROM_I2C;

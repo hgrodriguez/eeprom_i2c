@@ -18,12 +18,12 @@ package body EEPROM_I2C is
    function Is_Valid_Memory_Address (This     : in out EEPROM_Memory;
                                      Mem_Addr : HAL.UInt16)
                                      return Boolean is
-     (if Mem_Addr > This.Max_Address then False else True);
+     (if Mem_Addr > This.Max_Byte_Address then False else True);
 
    -----------------------------------------------------------------------------
    --  See .ads
-   function Address_Size (This : in out EEPROM_Memory)
-                          return HAL.I2C.I2C_Memory_Address_Size is
+   function Mem_Addr_Size (This : in out EEPROM_Memory)
+                           return HAL.I2C.I2C_Memory_Address_Size is
      (This.Mem_Addr_Size);
 
    -----------------------------------------------------------------------------
@@ -42,7 +42,7 @@ package body EEPROM_I2C is
    --  See .ads
    function Number_Of_Pages (This : in out EEPROM_Memory)
                              return HAL.UInt16 is
-     (This.Num_Of_Pages);
+     (This.Number_Of_Pages);
 
    -----------------------------------------------------------------------------
    --  See .ads
@@ -52,11 +52,11 @@ package body EEPROM_I2C is
 
    -----------------------------------------------------------------------------
    --  see .ads
-   procedure Read (This     : in out EEPROM_Memory'Class;
-                   Mem_Addr : HAL.UInt16;
-                   Data     : out HAL.I2C.I2C_Data;
-                   Status   : out EEPROM_Operation_Result;
-                   Timeout  : Natural := 1000) is
+   procedure Read (This       : in out EEPROM_Memory'Class;
+                   Mem_Addr   : HAL.UInt16;
+                   Data       : out HAL.I2C.I2C_Data;
+                   Status     : out EEPROM_Operation_Result;
+                   Timeout_MS : Natural := 1000) is
       I2C_Status : HAL.I2C.I2C_Status;
       use HAL.I2C;
    begin
@@ -67,11 +67,11 @@ package body EEPROM_I2C is
       end if;
 
       This.I2C_Port.all.Mem_Read (Addr          => This.I2C_Addr,
-                              Mem_Addr      => Mem_Addr,
-                              Mem_Addr_Size => This.Mem_Addr_Size,
-                              Data          => Data,
-                              Status        => I2C_Status,
-                              Timeout       => Timeout);
+                                  Mem_Addr      => Mem_Addr,
+                                  Mem_Addr_Size => This.Mem_Addr_Size,
+                                  Data          => Data,
+                                  Status        => I2C_Status,
+                                  Timeout       => Timeout_MS);
 
       Status.I2C_Status := I2C_Status;
       if Status.I2C_Status /= HAL.I2C.Ok then
@@ -83,12 +83,13 @@ package body EEPROM_I2C is
 
    -----------------------------------------------------------------------------
    --  see .ads
-   procedure Write (This     : in out EEPROM_Memory'Class;
-                    Mem_Addr : HAL.UInt16;
-                    Data     : HAL.I2C.I2C_Data;
-                    Status   : out EEPROM_Operation_Result;
-                    Timeout  : Natural := 1000) is
+   procedure Write (This       : in out EEPROM_Memory'Class;
+                    Mem_Addr   : HAL.UInt16;
+                    Data       : HAL.I2C.I2C_Data;
+                    Status     : out EEPROM_Operation_Result;
+                    Timeout_MS : Natural := 1000) is
       I2C_Status : HAL.I2C.I2C_Status;
+
       use HAL.I2C;
    begin
       if not Is_Valid_Memory_Address (This, Mem_Addr) then
@@ -97,19 +98,68 @@ package body EEPROM_I2C is
          return;
       end if;
 
-      This.I2C_Port.all.Mem_Write (Addr          => This.I2C_Addr,
-                               Mem_Addr      => Mem_Addr,
-                               Mem_Addr_Size => This.Mem_Addr_Size,
-                               Data          => Data,
-                               Status        => I2C_Status,
-                               Timeout       => Timeout);
-
-      Status.I2C_Status := I2C_Status;
-      if Status.I2C_Status /= HAL.I2C.Ok then
-         Status.E_Status := I2C_Not_Ok;
+      --  The data sheet has a t_WC (write cycle time) specified X ms
+      --  for any write
+      --  This write can be a byte or a page, but after one write,
+      --  the chip needs some time to write the data internally
+      if True then
+         --  this is an implementation which works, but is slow
+         declare
+            M_A        : HAL.UInt16 := Mem_Addr;
+            Data_1     : HAL.I2C.I2C_Data (1 .. 1);
+         begin
+            for Idx in Data'First .. Data'Last loop
+               Data_1 (1) := Data (Idx);
+               This.I2C_Port.all.Mem_Write (Addr          => This.I2C_Addr,
+                                            Mem_Addr      => M_A,
+                                            Mem_Addr_Size => This.Mem_Addr_Size,
+                                            Data          => Data_1,
+                                            Status        => I2C_Status,
+                                            Timeout       => Timeout_MS);
+               Status.I2C_Status := I2C_Status;
+               if Status.I2C_Status /= HAL.I2C.Ok then
+                  Status.E_Status := I2C_Not_Ok;
+                  return;
+               end if;
+               This.Delay_Callback.all (This.Write_Delay_MS);
+               M_A := M_A + 1;
+            end loop;
+         end;
       else
-         Status.E_Status := Ok;
+         --  Optimized part of the write operation.
+         --  Therefore we need to create chunks of write operations
+         --  separated by the t_WC time
+         --  To optimize the writing, we have to consider different cases.
+         --  Mem_Addr : two cases
+         --              can be aligend to a page start or not
+         null;
       end if;
+      Status.E_Status := Ok;
    end Write;
+
+   -----------------------------------------------------------------------------
+   --  see .ads
+   procedure Wipe (This   : in out EEPROM_Memory'Class;
+                   Status : out EEPROM_Operation_Result) is
+      pragma Warnings (Off, This);
+      pragma Warnings (Off, Status);
+      --  definition for one page of EEPROM, hoping, that one page
+      --  never kills the stack
+      Wipe_Data         : constant HAL.I2C.I2C_Data (1 .. Integer (This.Bytes_Per_Page))
+        := (others => 16#FF#);
+      Page_Base_Address : HAL.UInt16 := 16#0000#;
+   begin
+      --  loop over all pages
+      for P in 1 .. This.Number_Of_Pages loop
+         --  write one full page per cycle
+         This.Write (Mem_Addr   => Page_Base_Address,
+                     Data       => Wipe_Data,
+                     Status     => Status);
+         if Status.E_Status /= Ok then
+            return;
+         end if;
+         Page_Base_Address := Page_Base_Address + This.Bytes_Per_Page;
+      end loop;
+   end Wipe;
 
 end EEPROM_I2C;
