@@ -15,40 +15,45 @@ package body EEPROM_I2C is
 
    -----------------------------------------------------------------------------
    --  See .ads
+   function Type_of_Chip (This : in out EEPROM_Memory) return EEPROM_Chip is
+      (This.C_Type_of_Chip);
+
+   -----------------------------------------------------------------------------
+   --  See .ads
    function Is_Valid_Memory_Address (This     : in out EEPROM_Memory;
                                      Mem_Addr : HAL.UInt16)
                                      return Boolean is
-     (if Mem_Addr > This.Max_Byte_Address then False else True);
+     (if Mem_Addr > This.C_Max_Byte_Address then False else True);
 
    -----------------------------------------------------------------------------
    --  See .ads
    function Mem_Addr_Size (This : in out EEPROM_Memory)
                            return HAL.I2C.I2C_Memory_Address_Size is
-     (This.Mem_Addr_Size);
+     (This.C_Memory_Address_Size);
 
    -----------------------------------------------------------------------------
    --  See .ads
    function Size_In_Bytes (This : in out EEPROM_Memory)
                            return HAL.UInt32 is
-     (This.Size_In_Bytes);
+     (This.C_Size_In_Bytes);
 
    -----------------------------------------------------------------------------
    --  See .ads
    function Size_In_Bits (This : in out EEPROM_Memory)
                           return HAL.UInt32 is
-     (This.Size_In_Bits);
+     (This.C_Size_In_Bits);
 
    -----------------------------------------------------------------------------
    --  See .ads
    function Number_Of_Pages (This : in out EEPROM_Memory)
                              return HAL.UInt16 is
-     (This.Number_Of_Pages);
+     (This.C_Number_Of_Pages);
 
    -----------------------------------------------------------------------------
    --  See .ads
    function Bytes_Per_Page (This : in out EEPROM_Memory)
                             return HAL.UInt16 is
-     (This.Bytes_Per_Page);
+     (This.C_Bytes_Per_Page);
 
    -----------------------------------------------------------------------------
    --  see .ads
@@ -68,7 +73,7 @@ package body EEPROM_I2C is
 
       This.I2C_Port.all.Mem_Read (Addr          => This.I2C_Addr,
                                   Mem_Addr      => Mem_Addr,
-                                  Mem_Addr_Size => This.Mem_Addr_Size,
+                                  Mem_Addr_Size => This.C_Memory_Address_Size,
                                   Data          => Data,
                                   Status        => I2C_Status,
                                   Timeout       => Timeout_MS);
@@ -112,7 +117,7 @@ package body EEPROM_I2C is
                Data_1 (1) := Data (Idx);
                This.I2C_Port.all.Mem_Write (Addr          => This.I2C_Addr,
                                             Mem_Addr      => M_A,
-                                            Mem_Addr_Size => This.Mem_Addr_Size,
+                                            Mem_Addr_Size => This.C_Memory_Address_Size,
                                             Data          => Data_1,
                                             Status        => I2C_Status,
                                             Timeout       => Timeout_MS);
@@ -121,7 +126,7 @@ package body EEPROM_I2C is
                   Status.E_Status := I2C_Not_Ok;
                   return;
                end if;
-               This.Delay_Callback.all (This.Write_Delay_MS);
+               This.C_Delay_Callback.all (This.C_Write_Delay_MS);
                M_A := M_A + 1;
             end loop;
          end;
@@ -145,20 +150,20 @@ package body EEPROM_I2C is
       pragma Warnings (Off, Status);
       --  definition for one page of EEPROM, hoping, that one page
       --  never kills the stack
-      Wipe_Data         : constant HAL.I2C.I2C_Data (1 .. Integer (This.Bytes_Per_Page))
+      Wipe_Data         : constant HAL.I2C.I2C_Data (1 .. Integer (This.C_Bytes_Per_Page))
         := (others => 16#FF#);
       Page_Base_Address : HAL.UInt16 := 16#0000#;
    begin
       --  loop over all pages
       for P in 1 .. This.Number_Of_Pages loop
          --  write one full page per cycle
-         This.Write (Mem_Addr   => Page_Base_Address,
-                     Data       => Wipe_Data,
-                     Status     => Status);
+         This.Write (Mem_Addr => Page_Base_Address,
+                     Data     => Wipe_Data,
+                     Status   => Status);
          if Status.E_Status /= Ok then
             return;
          end if;
-         Page_Base_Address := Page_Base_Address + This.Bytes_Per_Page;
+         Page_Base_Address := Page_Base_Address + This.C_Bytes_Per_Page;
       end loop;
    end Wipe;
 

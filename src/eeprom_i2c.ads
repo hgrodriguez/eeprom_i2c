@@ -9,8 +9,6 @@
 with HAL;
 with HAL.I2C;
 
-with RP.I2C_Master;
-
 package EEPROM_I2C is
 
    -----------------------------------------------------------------------------
@@ -33,16 +31,16 @@ package EEPROM_I2C is
    type Any_EEPROM is access all EEPROM'Class;
 
    type EEPROM_Memory (--  which chip is it
-                       Type_of_Chip        : EEPROM_Chip;
+                       C_Type_of_Chip        : EEPROM_Chip;
                        --  the size of addressing the EEPROM
-                       Memory_Address_Size : HAL.I2C.I2C_Memory_Address_Size;
-                       Size_In_Bytes       : HAL.UInt32;
-                       Size_In_Bits        : HAL.UInt32;
-                       Number_Of_Pages     : HAL.UInt16;
-                       Bytes_Per_Page      : HAL.UInt16;
-                       Max_Byte_Address    : HAL.UInt16;
-                       Write_Delay_MS      : Integer;
-                       Delay_Callback      : Proc_Delay_Callback_MS;
+                       C_Memory_Address_Size : HAL.I2C.I2C_Memory_Address_Size;
+                       C_Size_In_Bytes       : HAL.UInt32;
+                       C_Size_In_Bits        : HAL.UInt32;
+                       C_Number_Of_Pages     : HAL.UInt16;
+                       C_Bytes_Per_Page      : HAL.UInt16;
+                       C_Max_Byte_Address    : HAL.UInt16;
+                       C_Write_Delay_MS      : Integer;
+                       C_Delay_Callback      : Proc_Delay_Callback_MS;
                        --  the address of the EEPROM on the bus
                        I2C_Addr            : HAL.I2C.I2C_Address;
                        --  the port where the EEPROM is connected to
@@ -79,6 +77,10 @@ package EEPROM_I2C is
       --  Carries the last status of the I2C operation executed
       I2C_Status : HAL.I2C.I2C_Status;
    end record;
+
+   -----------------------------------------------------------------------------
+   --  Returns the type of chip of this specific EEPROM.
+   function Type_of_Chip (This : in out EEPROM_Memory) return EEPROM_Chip;
 
    -----------------------------------------------------------------------------
    --  As there are different sizes for EEPROMs, this function checks

@@ -12,17 +12,21 @@ with RP.GPIO;
 
 with Pico;
 
-with EEPROM_I2C.MC24XX01;
-
 with Delay_Provider;
-
+with EEPROM_I2C.MC24XX01;
 with Helpers;
 
 procedure Write_One_Byte is
 
+   Eeprom_SDA      : RP.GPIO.GPIO_Point renames Pico.GP0;
+   Eeprom_SCL      : RP.GPIO.GPIO_Point renames Pico.GP1;
+
+   --  Trigger button when to read/write the byte from the EEPROM
+   --  This trigger is generated using a function generator
+   --    providing a square signal with a settable frequency
+   Button       : RP.GPIO.GPIO_Point renames Pico.GP16;
+
    procedure Write_EEPROM;
-   procedure Wait_For_Trigger_Fired;
-   procedure Wait_For_Trigger_Resume;
 
    --  Definitions for the EEPROM read byte to access
    MY_ADDR      : constant HAL.UInt16 := 37;
@@ -32,28 +36,6 @@ procedure Write_One_Byte is
 
    Write_Data    : constant HAL.I2C.I2C_Data (0 .. 0) := (0 => 16#A5#);
 
-   --  Trigger button when to read the byte from the EEPROM
-   --  This trigger is generated using a function generator
-   --    providing a square signal with a settable frequency
-   Button       : RP.GPIO.GPIO_Point renames Pico.GP16;
-   Button_State : Boolean;
-
-   procedure Wait_For_Trigger_Fired is
-   begin
-      loop
-         Button_State := RP.GPIO.Get (Button);
-         exit when Button_State;
-      end loop;
-   end Wait_For_Trigger_Fired;
-
-   procedure Wait_For_Trigger_Resume is
-   begin
-      loop
-         Button_State := RP.GPIO.Get (Button);
-         exit when not Button_State;
-      end loop;
-   end Wait_For_Trigger_Resume;
-
    procedure Write_EEPROM is
       Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01
         (Delay_Provider.Delay_MS'Access,
@@ -61,21 +43,21 @@ procedure Write_One_Byte is
          Helpers.Eeprom_I2C_Port'Access);
       Status : EEPROM_I2C.EEPROM_Operation_Result;
    begin
-      Wait_For_Trigger_Fired;
+      Helpers.Wait_For_Trigger_Fired;
 
       Eeprom.Write (Mem_Addr   => MY_ADDR,
                     Data       => Write_Data,
                     Status     => Status,
                     Timeout_MS => 0);
 
-      Wait_For_Trigger_Resume;
+      Helpers.Wait_For_Trigger_Resume;
 
       --  read indefinitely to watch the oscilloscope
       loop
          --  just some visual help
          Pico.LED.Clear;
 
-         Wait_For_Trigger_Fired;
+         Helpers.Wait_For_Trigger_Fired;
          --  just some visual help
          Pico.LED.Set;
 
@@ -89,7 +71,7 @@ procedure Write_One_Byte is
          My_Byte := Read_Data (0);
 
          --  wait for the trigger to release to read another cycle
-         Wait_For_Trigger_Resume;
+         Helpers.Wait_For_Trigger_Resume;
          --  just some visual help
          Pico.LED.Clear;
 
@@ -97,13 +79,9 @@ procedure Write_One_Byte is
    end Write_EEPROM;
 
 begin
-   Helpers.Initialize_I2C;
-
-   --  define a trigger input to enable oscilloscope tracking
-   RP.GPIO.Configure (This => Button,
-                      Mode => RP.GPIO.Input,
-                      Pull => RP.GPIO.Pull_Down,
-                      Func => RP.GPIO.SIO);
+   Helpers.Initialize (Eeprom_SDA,
+                       Eeprom_SCL,
+                       Button);
 
    --  just some visual help
    Pico.LED.Set;

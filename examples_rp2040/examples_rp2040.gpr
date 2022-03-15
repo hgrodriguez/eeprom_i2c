@@ -6,7 +6,7 @@ with "config/eeprom_i2c_examples_config.gpr";
 
 with "../eeprom_i2c.gpr";
 
-project Eeprom_I2c_Examples is
+project Examples_Rp2040 is
 
    for Runtime ("Ada") use "zfp-cortex-m0p";
    for Target use "arm-eabi";
@@ -107,4 +107,4 @@ project Eeprom_I2c_Examples is
 --          ("-Wl,--print-memory-usage,--gc-sections");
    end Linker;
 
-end Eeprom_I2c_Examples;
+end Examples_Rp2040;

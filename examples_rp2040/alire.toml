@@ -1,4 +1,4 @@
-name = "eeprom_i2c_examples"
+name = "examples_rp2040"
 description = "Shiny new project"
 version = "0.0.0"
 licenses = "BSD-3-Clause"
@@ -9,7 +9,7 @@ maintainers-logins = ["hgrodriguez"]
 tags = ["embedded", "rp2040"]
 website = "https://github.com/hgrodriguez/eeprom_i2c"
 
-executables = ["eeprom_i2c_examples"]
+executables = ["examples_rp2040"]
 [[depends-on]]  # Added by alr
 pico_bsp = "^1.1.0"  # Added by alr
 
