@@ -15,7 +15,7 @@ with Delay_Provider;
 with EEPROM_I2C.MC24XX01;
 with Helpers;
 
-procedure Write_Full_And_Check is
+procedure Pico_Write_Full_And_Check is
 
    Eeprom_SDA      : RP.GPIO.GPIO_Point renames Pico.GP0;
    Eeprom_SCL      : RP.GPIO.GPIO_Point renames Pico.GP1;
@@ -83,4 +83,4 @@ begin
    EEPROM_I2C.Wipe (This   => Eeprom,
                     Status => EE_Status);
 
-end Write_Full_And_Check;
+end Pico_Write_Full_And_Check;
