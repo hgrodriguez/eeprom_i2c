@@ -18,4 +18,6 @@ gnat_arm_elf = "^11.2.3"  # Added by alr
 [[depends-on]]  # Added by alr
 edc_client = "^1.3.3"  # Added by alr
 [[depends-on]]  # Added by alr
-itsybitsy_bsp = "~0.0.3"  # Added by alr
+itsybitsy_rp2040_bsp = "~0.1.0"  # Added by alr
+[[depends-on]]  # Added by alr
+tiny_rp2040_bsp = "~0.1.0"  # Added by alr

@@ -1,8 +1,9 @@
-with "itsybitsy_bsp.gpr";
-with "pico_bsp.gpr";
 with "edc_client.gpr";
+with "itsybitsy_rp2040_bsp.gpr";
+with "pico_bsp.gpr";
+with "tiny_rp2040_bsp.gpr";
 
-with "config/eeprom_i2c_examples_config.gpr";
+with "config/examples_rp2040_config.gpr";
 
 with "../eeprom_i2c.gpr";
 
