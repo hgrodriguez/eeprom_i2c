@@ -1,7 +1,5 @@
 with RP.Clock;
 
-with Pico;
-
 package body Helpers is
 
    procedure Initialize_I2C (SDA : in out RP.GPIO.GPIO_Point;
@@ -9,10 +7,17 @@ package body Helpers is
 
    The_Trigger : RP.GPIO.GPIO_Point;
 
-   procedure Initialize  (SDA     : in out RP.GPIO.GPIO_Point;
-                          SCL     : in out RP.GPIO.GPIO_Point;
-                          Trigger : RP.GPIO.GPIO_Point) is
+   procedure Initialize  (SDA       : in out RP.GPIO.GPIO_Point;
+                          SCL       : in out RP.GPIO.GPIO_Point;
+                          Trigger   : RP.GPIO.GPIO_Point;
+                          Frequency : Natural) is
    begin
+      --  standard initialization
+      RP.Clock.Initialize (Frequency);
+      RP.Clock.Enable (RP.Clock.PERI);
+      RP.Device.Timer.Enable;
+      RP.GPIO.Enable;
+
       Initialize_I2C (SDA, SCL);
       The_Trigger := Trigger;
       --  define a trigger input to enable oscilloscope tracking
@@ -39,15 +44,6 @@ package body Helpers is
    procedure Initialize_I2C  (SDA : in out RP.GPIO.GPIO_Point;
                               SCL : in out RP.GPIO.GPIO_Point) is
    begin
-      --  standard initialization
-      RP.Clock.Initialize (Pico.XOSC_Frequency);
-      RP.Clock.Enable (RP.Clock.PERI);
-      RP.Device.Timer.Enable;
-      RP.GPIO.Enable;
-
-      --  as always, visual help is appreciated
-      Pico.LED.Configure (RP.GPIO.Output);
-
       --  configure the I2C port
       SDA.Configure (Mode => RP.GPIO.Output,
                             Pull => RP.GPIO.Pull_Up,

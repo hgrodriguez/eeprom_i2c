@@ -70,8 +70,11 @@ procedure Read_One_Byte is
 begin
    Helpers.Initialize (Eeprom_SDA,
                        Eeprom_SCL,
-                       Button);
+                       Button,
+                       Pico.XOSC_Frequency);
 
+   --  as always, visual help is appreciated
+   Pico.LED.Configure (RP.GPIO.Output);
    --  just some visual help
    Pico.LED.Set;
 
