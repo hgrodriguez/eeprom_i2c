@@ -8,7 +8,9 @@
 with HAL;
 with HAL.I2C;
 
+with RP.Device;
 with RP.GPIO;
+with RP.I2C_Master;
 
 with Pico;
 
@@ -17,6 +19,9 @@ with EEPROM_I2C.MC24XX01;
 with Helpers;
 
 procedure Pico_Read_One_Byte is
+
+   --  Definitions of the connections to the EEPROM
+   Eeprom_I2C_Port : RP.I2C_Master.I2C_Master_Port renames RP.Device.I2C_0;
 
    Eeprom_SDA      : RP.GPIO.GPIO_Point renames Pico.GP0;
    Eeprom_SCL      : RP.GPIO.GPIO_Point renames Pico.GP1;
@@ -38,7 +43,7 @@ procedure Pico_Read_One_Byte is
       Eeprom : EEPROM_I2C.MC24XX01.EEPROM_Memory_MC24XX01
         (Delay_Provider.Delay_MS'Access,
          EEPROM_I2C.MC24XX01.I2C_DEFAULT_ADDRESS,
-         Helpers.Eeprom_I2C_Port'Access);
+         Eeprom_I2C_Port'Access);
       Status : EEPROM_I2C.EEPROM_Operation_Result;
    begin
       --  read indefinitely to watch the oscilloscope
@@ -70,6 +75,7 @@ procedure Pico_Read_One_Byte is
 begin
    Helpers.Initialize (Eeprom_SDA,
                        Eeprom_SCL,
+                       Eeprom_I2C_Port,
                        Button,
                        Pico.XOSC_Frequency);
 

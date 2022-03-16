@@ -1,5 +1,3 @@
-with "rp2040_hal.gpr";
-
 with "config/eeprom_i2c_config.gpr";
 project Eeprom_I2c is
 

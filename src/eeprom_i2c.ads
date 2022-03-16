@@ -14,7 +14,8 @@ package EEPROM_I2C is
    -----------------------------------------------------------------------------
    --  List of all implemented/supported chips
    --  The data sheets will be added into this repository
-   type EEPROM_Chip is (EEC_MC24XX01 --  MicroChip 24XX01/24LC01B
+   type EEPROM_Chip is (EEC_MC24XX01, --  MicroChip 24XX01/24LC01B
+                        EEC_MC24XX16  --  MicroChip 24LC16B
                        );
 
    -----------------------------------------------------------------------------
@@ -36,6 +37,8 @@ package EEPROM_I2C is
                        C_Memory_Address_Size : HAL.I2C.I2C_Memory_Address_Size;
                        C_Size_In_Bytes       : HAL.UInt32;
                        C_Size_In_Bits        : HAL.UInt32;
+                       C_Number_Of_Blocks    : HAL.UInt16;
+                       C_Bytes_Per_Block     : HAL.UInt16;
                        C_Number_Of_Pages     : HAL.UInt16;
                        C_Bytes_Per_Page      : HAL.UInt16;
                        C_Max_Byte_Address    : HAL.UInt16;
@@ -105,6 +108,16 @@ package EEPROM_I2C is
                           return HAL.UInt32;
 
    -----------------------------------------------------------------------------
+   --  Returns the number of blocks of this specific EEPROM.
+   function Number_Of_Blocks (This : in out EEPROM_Memory)
+                              return HAL.UInt16;
+
+   -----------------------------------------------------------------------------
+   --  Returns the number of blocks of this specific EEPROM.
+   function Bytes_Per_Block (This : in out EEPROM_Memory)
+                             return HAL.UInt16;
+
+   -----------------------------------------------------------------------------
    --  Returns the number of pages of this specific EEPROM.
    function Number_Of_Pages (This : in out EEPROM_Memory)
                              return HAL.UInt16;
@@ -113,6 +126,19 @@ package EEPROM_I2C is
    --  Returns the number of bytes per page for this specific EEPROM.
    function Bytes_Per_Page (This : in out EEPROM_Memory)
                             return HAL.UInt16;
+
+   type EEPROM_Effective_Address is record
+      I2C_Address : HAL.I2C.I2C_Address;
+      Mem_Addr    : HAL.UInt16;
+   end record;
+
+   -----------------------------------------------------------------------------
+   --  Constructs the final I2C address.
+   --  Some EEPROMs have not only addresses, but blocks,
+   --  which are encoded into the I2C address.
+   function Construct_I2C_Address (This     : in out EEPROM_Memory'Class;
+                                  Mem_Addr   : HAL.UInt16)
+                                   return EEPROM_Effective_Address;
 
    -----------------------------------------------------------------------------
    --  Reads from the EEPROM memory.
