@@ -177,35 +177,4 @@ private
                                    Mem_Addr   : HAL.UInt16)
                                    return EEPROM_Effective_Address;
 
-   -----------------------------------------------------------------------------
-   --  Writes the header bytes which are not full pages of an EEPROM.
-   --  Gives back the next address to write into and the
-   --  number of bytes leftover for the next write.
-   procedure Write_Header_Bytes (This       : in out EEPROM_Memory'Class;
-                               Start_Addr : HAL.UInt16;
-                               Data       : HAL.I2C.I2C_Data;
-                               Status     : out EEPROM_Operation_Result;
-                               Timeout_MS : Natural := 1000;
-                               Next_Addr  : out HAL.UInt16;
-                               Left_Over  : out Natural);
-
-   -----------------------------------------------------------------------------
-   --  Writes full pages of an EEPROM.
-   --  Gives back the next address to write into and the
-   --  number of bytes leftover for the last write.
-   procedure Write_Full_Pages (This       : in out EEPROM_Memory'Class;
-                               Start_Addr : HAL.UInt16;
-                               Data       : HAL.I2C.I2C_Data;
-                               Status     : out EEPROM_Operation_Result;
-                               Timeout_MS : Natural := 1000;
-                               Next_Addr  : out HAL.UInt16;
-                               Left_Over  : out Natural);
-
-   -----------------------------------------------------------------------------
-   --  Writes the tailing bytes which are not full pages of an EEPROM.
-   procedure Write_Tailing_Bytes (This       : in out EEPROM_Memory'Class;
-                                 Mem_Addr : HAL.UInt16;
-                                 Data       : HAL.I2C.I2C_Data;
-                                 Status     : out EEPROM_Operation_Result;
-                                 Timeout_MS : Natural := 1000);
 end EEPROM_I2C;
