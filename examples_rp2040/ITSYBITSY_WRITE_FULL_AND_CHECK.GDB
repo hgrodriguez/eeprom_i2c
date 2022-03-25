@@ -1,5 +1,0 @@
-file bin/itsybitsy_write_full_and_check
-target extended-remote localhost:7777
-load
-break ItsyBitsy_Write_Full_And_Check
-set print element 0
