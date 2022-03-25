@@ -133,14 +133,6 @@ package EEPROM_I2C is
    end record;
 
    -----------------------------------------------------------------------------
-   --  Constructs the final I2C address.
-   --  Some EEPROMs have not only addresses, but blocks,
-   --  which are encoded into the I2C address.
-   function Construct_I2C_Address (This     : in out EEPROM_Memory'Class;
-                                  Mem_Addr   : HAL.UInt16)
-                                   return EEPROM_Effective_Address;
-
-   -----------------------------------------------------------------------------
    --  Reads from the EEPROM memory.
    --  Mem_Addr   : address to start the reading from
    --  Data       : storage to put the read data into
@@ -176,4 +168,44 @@ package EEPROM_I2C is
    procedure Wipe (This   : in out EEPROM_Memory'Class;
                    Status : out EEPROM_Operation_Result);
 
+private
+   -----------------------------------------------------------------------------
+   --  Constructs the final I2C address.
+   --  Some EEPROMs have not only addresses, but blocks,
+   --  which are encoded into the I2C address.
+   function Construct_I2C_Address (This       : in out EEPROM_Memory'Class;
+                                   Mem_Addr   : HAL.UInt16)
+                                   return EEPROM_Effective_Address;
+
+   -----------------------------------------------------------------------------
+   --  Writes the header bytes which are not full pages of an EEPROM.
+   --  Gives back the next address to write into and the
+   --  number of bytes leftover for the next write.
+   procedure Write_Header_Bytes (This       : in out EEPROM_Memory'Class;
+                               Start_Addr : HAL.UInt16;
+                               Data       : HAL.I2C.I2C_Data;
+                               Status     : out EEPROM_Operation_Result;
+                               Timeout_MS : Natural := 1000;
+                               Next_Addr  : out HAL.UInt16;
+                               Left_Over  : out Natural);
+
+   -----------------------------------------------------------------------------
+   --  Writes full pages of an EEPROM.
+   --  Gives back the next address to write into and the
+   --  number of bytes leftover for the last write.
+   procedure Write_Full_Pages (This       : in out EEPROM_Memory'Class;
+                               Start_Addr : HAL.UInt16;
+                               Data       : HAL.I2C.I2C_Data;
+                               Status     : out EEPROM_Operation_Result;
+                               Timeout_MS : Natural := 1000;
+                               Next_Addr  : out HAL.UInt16;
+                               Left_Over  : out Natural);
+
+   -----------------------------------------------------------------------------
+   --  Writes the tailing bytes which are not full pages of an EEPROM.
+   procedure Write_Tailing_Bytes (This       : in out EEPROM_Memory'Class;
+                                 Mem_Addr : HAL.UInt16;
+                                 Data       : HAL.I2C.I2C_Data;
+                                 Status     : out EEPROM_Operation_Result;
+                                 Timeout_MS : Natural := 1000);
 end EEPROM_I2C;
