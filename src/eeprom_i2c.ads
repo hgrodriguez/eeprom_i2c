@@ -15,6 +15,7 @@ package EEPROM_I2C is
    --  List of all implemented/supported chips
    --  The data sheets will be added into this repository
    type EEPROM_Chip is (EEC_MC24XX01, --  MicroChip 24XX01/24LC01B
+                        EEC_MC24XX02, --  MicroChip 24XX02/24LC02B
                         EEC_MC24XX16  --  MicroChip 24LC16B
                        );
 

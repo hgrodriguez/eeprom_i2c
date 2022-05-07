@@ -1,6 +1,6 @@
 name = "eeprom_i2c"
 description = "EEPROM I2C drivers library for embedded platforms"
-version = "2.0.1"
+version = "3.0.0"
 licenses = "BSD-3-Clause"
 
 authors = ["Holger Rodriguez"]

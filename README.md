@@ -13,7 +13,9 @@ Optimizations like page writing etc. are planned for future releases
 # Chips implemented and tested
 
 ## 8-bits address range
-MicroChip 24XX01/24LC01B
+MicroChip 24XX01/24LC01B: 1 kBit
+MicroChip 24AA02/24LC02B: 2 kBit
+MicroChip 24LC16B: 16 kBit
 
 ## 16-bits address range
 None so far.
@@ -21,7 +23,7 @@ None so far.
 # Versioning (Planning)
 Major.Minor.Patch
 
-Current version: 2.0.0
+Current version: 3.0.0
 
 ## Major
 Incrementing with every EEPROM chip implemented.
