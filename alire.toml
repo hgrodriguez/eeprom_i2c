@@ -1,6 +1,6 @@
 name = "eeprom_i2c"
 description = "EEPROM I2C drivers library for embedded platforms"
-version = "3.0.1"
+version = "3.1.0"
 licenses = "BSD-3-Clause"
 
 authors = ["Holger Rodriguez"]
@@ -11,5 +11,3 @@ website = "https://github.com/hgrodriguez/eeprom_i2c"
 
 [[depends-on]]  # Added by alr
 hal = "~0.1.0"  # Added by alr
-[[depends-on]]  # Added by alr
-gnat_arm_elf = "^11.2.3"  # Added by alr
