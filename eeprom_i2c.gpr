@@ -1,9 +1,6 @@
 with "config/eeprom_i2c_config.gpr";
 project Eeprom_I2c is
 
-   for Runtime ("Ada") use "zfp-cortex-m0p";
-   for Target use "arm-eabi";
-
    for Library_Name use "Eeprom_I2c";
    for Library_Version use Project'Library_Name & ".so." & Eeprom_I2c_Config.Crate_Version;
 
