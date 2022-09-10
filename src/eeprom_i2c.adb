@@ -204,7 +204,17 @@ package body EEPROM_I2C is
       XX            : HAL.UInt16;
       Result        : EEPROM_Effective_Address := (I2C_Address => This.I2C_Addr,
                                                    Mem_Addr => Mem_Addr);
+      use HAL.I2C;
    begin
+      if This.C_Memory_Address_Size = HAL.I2C.Memory_Size_16b then
+         --  nothing to do, as there are no blocks to consider
+         return Result;
+      end if;
+
+      --  This.C_Memory_Address_Size = HAL.I2C.Memory_Size_8b
+      --  there are chips, which have the extension of more then 8 bits
+      --  of mem address as blocks in the I2C address
+      --  this needs computing
       if This.C_Number_Of_Blocks > 1 then
          XX := HAL.UInt16 (Shift_Right (Mem_Addr, 8));
          XX := HAL.UInt16 (Shift_Left (XX, 1));
