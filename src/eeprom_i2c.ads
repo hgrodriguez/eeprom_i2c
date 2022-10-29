@@ -14,10 +14,11 @@ package EEPROM_I2C is
    -----------------------------------------------------------------------------
    --  List of all implemented/supported chips
    --  The data sheets will be added into this repository
-   type EEPROM_Chip is (EEC_MC24XX01,  --  MicroChip 24XX01/24LC01B
-                        EEC_MC24XX02,  --  MicroChip 24XX02/24LC02B
-                        EEC_MC24XX16,  --  MicroChip 24LC16B
-                        EEC_MC24XX64   --  MicroChip 24XX64
+   type EEPROM_Chip is (EEC_MC24XX01,   --  MicroChip 24XX01/24LC01B
+                        EEC_MC24XX02,   --  MicroChip 24XX02/24LC02B
+                        EEC_MC24XX16,   --  MicroChip 24LC16B
+                        EEC_MC24XX64,   --  MicroChip 24XX64
+                        EEC_MC24XX512   --  MicroChip 24XX512
                        );
 
    -----------------------------------------------------------------------------
@@ -33,17 +34,17 @@ package EEPROM_I2C is
    type EEPROM is interface;
    type Any_EEPROM is access all EEPROM'Class;
 
-   type EEPROM_Memory (--  which chip is it
+   type EEPROM_Memory ( --  which chip is it
                        C_Type_of_Chip        : EEPROM_Chip;
                        --  the size of addressing the EEPROM
                        C_Memory_Address_Size : HAL.I2C.I2C_Memory_Address_Size;
                        C_Size_In_Bytes       : HAL.UInt32;
                        C_Size_In_Bits        : HAL.UInt32;
                        C_Number_Of_Blocks    : HAL.UInt16;
-                       C_Bytes_Per_Block     : HAL.UInt16;
+                       C_Bytes_Per_Block     : HAL.UInt32;
                        C_Number_Of_Pages     : HAL.UInt16;
                        C_Bytes_Per_Page      : HAL.UInt16;
-                       C_Max_Byte_Address    : HAL.UInt16;
+                       C_Max_Byte_Address    : HAL.UInt32;
                        C_Write_Delay_MS      : Integer;
                        C_Delay_Callback      : Proc_Delay_Callback_MS;
                        --  the address of the EEPROM on the bus
@@ -91,7 +92,7 @@ package EEPROM_I2C is
    --  As there are different sizes for EEPROMs, this function checks
    --  the memory address for being valid or out of range.
    function Is_Valid_Memory_Address (This     : in out EEPROM_Memory;
-                                     Mem_Addr : HAL.UInt16)
+                                     Mem_Addr : HAL.UInt32)
                                      return Boolean;
 
    -----------------------------------------------------------------------------
@@ -117,7 +118,7 @@ package EEPROM_I2C is
    -----------------------------------------------------------------------------
    --  Returns the number of blocks of this specific EEPROM.
    function Bytes_Per_Block (This : in out EEPROM_Memory)
-                             return HAL.UInt16;
+                             return HAL.UInt32;
 
    -----------------------------------------------------------------------------
    --  Returns the number of pages of this specific EEPROM.
@@ -144,7 +145,7 @@ package EEPROM_I2C is
    --               If the operation is not finished inside the
    --               time frame given, the operation will fail.
    procedure Read (This       : in out EEPROM_Memory'Class;
-                   Mem_Addr   : HAL.UInt16;
+                   Mem_Addr   : HAL.UInt32;
                    Data       : out HAL.I2C.I2C_Data;
                    Status     : out EEPROM_Operation_Result;
                    Timeout_MS : Natural := 1000);
@@ -159,7 +160,7 @@ package EEPROM_I2C is
    --               If the operation is not finished inside the
    --               time frame given, the operation will fail.
    procedure Write (This       : in out EEPROM_Memory'Class;
-                    Mem_Addr   : HAL.UInt16;
+                    Mem_Addr   : HAL.UInt32;
                     Data       : HAL.I2C.I2C_Data;
                     Status     : out EEPROM_Operation_Result;
                     Timeout_MS : Natural := 1000);
@@ -176,7 +177,7 @@ private
    --  Some EEPROMs have not only addresses, but blocks,
    --  which are encoded into the I2C address.
    function Construct_I2C_Address (This       : in out EEPROM_Memory'Class;
-                                   Mem_Addr   : HAL.UInt16)
+                                   Mem_Addr   : HAL.UInt32)
                                    return EEPROM_Effective_Address;
 
 end EEPROM_I2C;

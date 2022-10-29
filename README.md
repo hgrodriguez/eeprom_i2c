@@ -22,6 +22,8 @@ MicroChip 24LC16B: 16 kBit
 ## 16-bits address range
 MicroChip 24FC64: 64 kBit
 
+MicroChip 24FC512: 512 kBit
+
 # Versioning (Planning)
 Major.Minor.Patch
 

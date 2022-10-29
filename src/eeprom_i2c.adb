@@ -7,7 +7,6 @@
 --
 --  SPDX-License-Identifier: BSD-3-Clause
 --
-with HAL.I2C;
 
 package body EEPROM_I2C is
 
@@ -21,7 +20,7 @@ package body EEPROM_I2C is
    -----------------------------------------------------------------------------
    --  See .ads
    function Is_Valid_Memory_Address (This     : in out EEPROM_Memory;
-                                     Mem_Addr : HAL.UInt16)
+                                     Mem_Addr : HAL.UInt32)
                                      return Boolean is
      (if Mem_Addr <= This.C_Max_Byte_Address then True else False);
 
@@ -52,7 +51,7 @@ package body EEPROM_I2C is
    -----------------------------------------------------------------------------
    --  See .ads
    function Bytes_Per_Block (This : in out EEPROM_Memory)
-                             return HAL.UInt16 is
+                             return HAL.UInt32 is
      (This.C_Bytes_Per_Block);
 
    -----------------------------------------------------------------------------
@@ -70,7 +69,7 @@ package body EEPROM_I2C is
    -----------------------------------------------------------------------------
    --  see .ads
    procedure Read (This       : in out EEPROM_Memory'Class;
-                   Mem_Addr   : HAL.UInt16;
+                   Mem_Addr   : HAL.UInt32;
                    Data       : out HAL.I2C.I2C_Data;
                    Status     : out EEPROM_Operation_Result;
                    Timeout_MS : Natural := 1000) is
@@ -85,7 +84,7 @@ package body EEPROM_I2C is
       end if;
 
       declare
-         M_A        : HAL.UInt16 := Mem_Addr;
+         M_A        : HAL.UInt32 := Mem_Addr;
          Data_1     : HAL.I2C.I2C_Data (1 .. 1);
       begin
          for Idx in Data'First .. Data'Last loop
@@ -119,18 +118,15 @@ package body EEPROM_I2C is
    -----------------------------------------------------------------------------
    --  see .ads
    procedure Write (This       : in out EEPROM_Memory'Class;
-                    Mem_Addr   : HAL.UInt16;
+                    Mem_Addr   : HAL.UInt32;
                     Data       : HAL.I2C.I2C_Data;
                     Status     : out EEPROM_Operation_Result;
                     Timeout_MS : Natural := 1000) is
       I2C_Status            : HAL.I2C.I2C_Status;
       Effective_I2C_Address : EEPROM_Effective_Address;
 
-      M_A        : HAL.UInt16 := Mem_Addr;
+      M_A        : HAL.UInt32 := Mem_Addr;
       Data_1     : HAL.I2C.I2C_Data (1 .. 1);
-
-      Mem_Starts_On_Page_Boundary : Boolean
-        := Mem_Addr mod This.C_Bytes_Per_Page = 0;
 
       use HAL.I2C;
    begin
@@ -176,15 +172,16 @@ package body EEPROM_I2C is
                    Status : out EEPROM_Operation_Result) is
       --  definition for one page of EEPROM, hoping, that one page
       --  never kills the stack
-      Wipe_Data : constant HAL.I2C.I2C_Data (1
-                                             ..
-                                               Integer (This.C_Bytes_Per_Block))
-        := (others => 16#FF#);
+      Wipe_Data : constant HAL.I2C.I2C_Data
+        (1
+         ..
+           Integer (This.C_Bytes_Per_Page))
+          := (others => 16#FF#);
 
-      Page_Base_Address : HAL.UInt16 := 16#0000#;
+      Page_Base_Address : HAL.UInt32 := 16#0000_0000#;
    begin
       --  loop over all pages
-      for P in 1 .. This.Number_Of_Blocks loop
+      for P in 1 .. This.C_Number_Of_Pages loop
          --  write one full page per cycle
          This.Write (Mem_Addr => Page_Base_Address,
                      Data     => Wipe_Data,
@@ -192,18 +189,20 @@ package body EEPROM_I2C is
          if Status.E_Status /= Ok then
             return;
          end if;
-         Page_Base_Address := Page_Base_Address + This.C_Bytes_Per_Block;
+         Page_Base_Address := Page_Base_Address
+           + HAL.UInt32 (This.C_Bytes_Per_Page);
       end loop;
    end Wipe;
 
    -----------------------------------------------------------------------------
    --  See .ads
    function Construct_I2C_Address (This       : in out EEPROM_Memory'Class;
-                                   Mem_Addr   : HAL.UInt16)
+                                   Mem_Addr   : HAL.UInt32)
                                    return EEPROM_Effective_Address is
       XX            : HAL.UInt16;
-      Result        : EEPROM_Effective_Address := (I2C_Address => This.I2C_Addr,
-                                                   Mem_Addr => Mem_Addr);
+      Result        : EEPROM_Effective_Address
+        := (I2C_Address => This.I2C_Addr,
+            Mem_Addr => HAL.UInt16 (Mem_Addr));
       use HAL.I2C;
    begin
       if This.C_Memory_Address_Size = HAL.I2C.Memory_Size_16b then
@@ -217,10 +216,11 @@ package body EEPROM_I2C is
       --  this needs computing
       if This.C_Number_Of_Blocks > 1 then
          XX := HAL.UInt16 (Shift_Right (Mem_Addr, 8));
-         XX := HAL.UInt16 (Shift_Left (XX, 1));
-         Result.I2C_Address := Result.I2C_Address or HAL.I2C.I2C_Address (XX and 16#3FF#);
+         XX := Shift_Left (XX, 1);
+         Result.I2C_Address := Result.I2C_Address
+           or HAL.I2C.I2C_Address (XX and 16#3FF#);
       end if;
-      Result.Mem_Addr :=  Mem_Addr and 16#FF#;
+      Result.Mem_Addr :=  HAL.UInt16 (Mem_Addr and 16#FF#);
       return Result;
    end Construct_I2C_Address;
 
