@@ -75,6 +75,10 @@ package body EEPROM_I2C is
                    Timeout_MS : Natural := 1000) is
       I2C_Status            : HAL.I2C.I2C_Status;
       Effective_I2C_Address : EEPROM_Effective_Address;
+
+      M_A        : HAL.UInt32 := Mem_Addr;
+      Data_1     : HAL.I2C.I2C_Data (1 .. 1);
+
       use HAL.I2C;
    begin
       if not This.Is_Valid_Memory_Address (Mem_Addr) then
@@ -83,29 +87,24 @@ package body EEPROM_I2C is
          return;
       end if;
 
-      declare
-         M_A        : HAL.UInt32 := Mem_Addr;
-         Data_1     : HAL.I2C.I2C_Data (1 .. 1);
-      begin
-         for Idx in Data'First .. Data'Last loop
-            Effective_I2C_Address := This.Construct_I2C_Address (M_A);
-            This.
-              I2C_Port.all.
-                Mem_Read (Addr          => Effective_I2C_Address.I2C_Address,
-                          Mem_Addr      => Effective_I2C_Address.Mem_Addr,
-                          Mem_Addr_Size => This.C_Memory_Address_Size,
-                          Data          => Data_1,
-                          Status        => I2C_Status,
-                          Timeout       => Timeout_MS);
-            Status.I2C_Status := I2C_Status;
-            if Status.I2C_Status /= HAL.I2C.Ok then
-               Status.E_Status := I2C_Not_Ok;
-               return;
-            end if;
-            Data (Idx) := Data_1 (1);
-            M_A := M_A + 1;
-         end loop;
-      end;
+      for Idx in Data'First .. Data'Last loop
+         Effective_I2C_Address := This.Construct_I2C_Address (M_A);
+         This.
+           I2C_Port.all.
+             Mem_Read (Addr          => Effective_I2C_Address.I2C_Address,
+                       Mem_Addr      => Effective_I2C_Address.Mem_Addr,
+                       Mem_Addr_Size => This.C_Memory_Address_Size,
+                       Data          => Data_1,
+                       Status        => I2C_Status,
+                       Timeout       => Timeout_MS);
+         Status.I2C_Status := I2C_Status;
+         if Status.I2C_Status /= HAL.I2C.Ok then
+            Status.E_Status := I2C_Not_Ok;
+            return;
+         end if;
+         Data (Idx) := Data_1 (1);
+         M_A := M_A + 1;
+      end loop;
 
       Status.I2C_Status := I2C_Status;
       if Status.I2C_Status /= HAL.I2C.Ok then

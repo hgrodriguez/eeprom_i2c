@@ -18,6 +18,7 @@ package EEPROM_I2C is
                         EEC_MC24XX02,   --  MicroChip 24XX02/24LC02B
                         EEC_MC24XX16,   --  MicroChip 24LC16B
                         EEC_MC24XX64,   --  MicroChip 24XX64
+                        EEC_MC24XX256,  --  MicroChip 24XX256
                         EEC_MC24XX512   --  MicroChip 24XX512
                        );
 
