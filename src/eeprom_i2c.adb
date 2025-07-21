@@ -45,7 +45,7 @@ package body EEPROM_I2C is
    -----------------------------------------------------------------------------
    --  See .ads
    function Number_Of_Blocks (This : in out EEPROM_Memory)
-                              return HAL.UInt16 is
+                              return HAL.UInt8 is
      (This.C_Number_Of_Blocks);
 
    -----------------------------------------------------------------------------
@@ -88,7 +88,11 @@ package body EEPROM_I2C is
       end if;
 
       for Idx in Data'First .. Data'Last loop
-         Effective_I2C_Address := This.Construct_I2C_Address (M_A);
+         Effective_I2C_Address := This.Construct_I2C_Address (M_A, Status);
+         if Status.E_Status /= Ok then
+            return;
+         end if;
+
          This.
            I2C_Port.all.
              Mem_Read (Addr          => Effective_I2C_Address.I2C_Address,
@@ -145,7 +149,11 @@ package body EEPROM_I2C is
       --  basic functionality, which works
       for Idx in Data'First .. Data'Last loop
          Data_1 (1) := Data (Idx);
-         Effective_I2C_Address := This.Construct_I2C_Address (M_A);
+         Effective_I2C_Address := This.Construct_I2C_Address (M_A, Status);
+         if Status.E_Status /= Ok then
+            return;
+         end if;
+
          This.
            I2C_Port.all.
              Mem_Write (Addr          => Effective_I2C_Address.I2C_Address,
@@ -196,30 +204,62 @@ package body EEPROM_I2C is
    -----------------------------------------------------------------------------
    --  See .ads
    function Construct_I2C_Address (This       : in out EEPROM_Memory'Class;
-                                   Mem_Addr   : HAL.UInt32)
+                                   Mem_Addr   : HAL.UInt32;
+                                   Status     : out EEPROM_Operation_Result)
                                    return EEPROM_Effective_Address is
-      XX            : HAL.UInt16;
+      Block_Select            : HAL.UInt16;
       Result        : EEPROM_Effective_Address
         := (I2C_Address => This.I2C_Addr,
             Mem_Addr => HAL.UInt16 (Mem_Addr));
       use HAL.I2C;
    begin
-      if This.C_Memory_Address_Size = HAL.I2C.Memory_Size_16b then
+      Status.E_Status := Ok;
+      if This.C_Number_Of_Blocks = 1 then
          --  nothing to do, as there are no blocks to consider
          return Result;
       end if;
 
-      --  This.C_Memory_Address_Size = HAL.I2C.Memory_Size_8b
-      --  there are chips, which have the extension of more then 8 bits
+      --  there are chips, which have the extension of more then 8/16 bits
       --  of mem address as blocks in the I2C address
       --  this needs computing
-      if This.C_Number_Of_Blocks > 1 then
-         XX := HAL.UInt16 (Shift_Right (Mem_Addr, 8));
-         XX := Shift_Left (XX, 1);
-         Result.I2C_Address := Result.I2C_Address
-           or HAL.I2C.I2C_Address (XX and 16#3FF#);
-      end if;
-      Result.Mem_Addr :=  HAL.UInt16 (Mem_Addr and 16#FF#);
+      case This.C_Memory_Address_Size is
+         when HAL.I2C.Memory_Size_8b =>
+            --  the block is encoded in the upper 8 bits
+            Block_Select := HAL.UInt16 (Shift_Right (Mem_Addr, 8));
+         when HAL.I2C.Memory_Size_16b =>
+            --  the block is encoded in the upper 16 bits
+            Block_Select := HAL.UInt16 (Shift_Right (Mem_Addr, 16));
+      end case;
+
+      --  bit mask to use for blending the block into the I2C_Addr
+      case This.C_Number_Of_Blocks is
+         when 2 =>
+            Block_Select := Block_Select and 2#1#;
+         when 4 =>
+            Block_Select := Block_Select and 2#11#;
+         when 8 =>
+            Block_Select := Block_Select and 2#111#;
+         when others =>
+            Status.E_Status := Block_Number_Invalid;
+            return Result;
+      end case;
+
+      --  do not touch the R/\W bit
+      Block_Select := Shift_Left (Block_Select, 1);
+
+      --  patch it into the UInt10 addres of I2C
+      Result.I2C_Address := Result.I2C_Address
+        or HAL.I2C.I2C_Address (Block_Select);
+
+      case This.C_Memory_Address_Size is
+         when HAL.I2C.Memory_Size_8b =>
+            --  the "final" address is the lower 8 bits
+            Result.Mem_Addr :=  HAL.UInt16 (Mem_Addr and 16#FF#);
+         when HAL.I2C.Memory_Size_16b =>
+            --  the "final" address is the lower 16 bits
+            Result.Mem_Addr :=  HAL.UInt16 (Mem_Addr and 16#FFFF#);
+      end case;
+
       return Result;
    end Construct_I2C_Address;
 

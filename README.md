@@ -1,9 +1,23 @@
 # eeprom_i2c
 This library
+
 * implements the reading/writing for EEPROMs using the I2C interface.
 * has no dependency on any other library except HAL.
 
 Examples for different platforms are [available](https://github.com/hgrodriguez/eeprom_i2c_examples).
+
+###If you are using this library with the RP2024/rp2040_hal crate, here is an important information
+To use thie EEPROM I2C library, you must copy the two files:
+
+* rp-i2c_master-extension. _adb
+* rp-i2c_master-extension. _ads
+
+into *your* project as
+
+* rp-i2c_master-extension.adb
+* rp-i2c_master-extension.ads
+
+and use those implementations to create an I2C_Master_Port.
 
 # Current status
 Only one byte read/write is implemented and tested
@@ -25,6 +39,8 @@ MicroChip 24FC64: 64 kBit
 MicroChip 24FC256: 256 kBit
 
 MicroChip 24FC512: 512 kBit
+
+MicroChip 24FC512: 1024 kBit
 
 # Versioning (Planning)
 Major.Minor.Patch

@@ -1,0 +1,176 @@
+with HAL; use HAL;
+with HAL.I2C; use HAL.I2C;
+
+with RP.I2C; use RP.I2C;
+
+package body RP.I2C_Master.Extension is
+
+   --------------------------------------------------------------------------
+   --  Writes the memory address to the device, implementing the
+   --  requirement, that the Stop signal can be different (enabled/disabled)
+   --  so that all combinations can be covered.
+   procedure Write_Memory_Address
+     (This          : in out I2C_Master_Port_Extended;
+      Stop          : Boolean;
+      Data_Length   : Positive;
+      Mem_Addr      : HAL.UInt16;
+      Mem_Addr_Size : HAL.I2C.I2C_Memory_Address_Size;
+      Deadline      : RP.Timer.Time;
+      S             : out RP.I2C.I2C_Status);
+
+   overriding
+   procedure Mem_Write
+     (This          : in out I2C_Master_Port_Extended;
+      Addr          : HAL.I2C.I2C_Address;
+      Mem_Addr      : HAL.UInt16;
+      Mem_Addr_Size : HAL.I2C.I2C_Memory_Address_Size;
+      Data          : HAL.I2C.I2C_Data;
+      Status        : out HAL.I2C.I2C_Status;
+      Timeout       : Natural := 1000)
+   is
+      use RP.Timer;
+      Deadline : constant Time := RP.Timer.Clock + Milliseconds (Timeout);
+      S        : RP.I2C.I2C_Status;
+   begin
+      This.Set_Address (Addr, Status, Deadline);
+      if Status /= HAL.I2C.Ok then
+         return;
+      end if;
+
+      Write_Memory_Address (This          => This,
+                            Stop          => This.Stop_W,
+                            Data_Length   => Data'Length,
+                            Mem_Addr      => Mem_Addr,
+                            Mem_Addr_Size => Mem_Addr_Size,
+                            Deadline      => Deadline,
+                            S             => S);
+      if S /= RP.I2C.Ok then
+         Status := To_HAL_Status (S);
+         return;
+      end if;
+
+      for D of Data loop
+         This.Port.Write (D, S, Deadline);
+         if S /= RP.I2C.Ok then
+            This.Port.Abort_Write;
+            This.Port.Clear_Error;
+            Status := To_HAL_Status (S);
+            return;
+         end if;
+      end loop;
+
+      while not This.Port.State.TX_Empty loop
+         if Clock >= Deadline then
+            Status := HAL.I2C.Err_Timeout;
+            return;
+         end if;
+      end loop;
+
+      Status := HAL.I2C.Ok;
+   end Mem_Write;
+
+   overriding
+   procedure Mem_Read
+     (This          : in out I2C_Master_Port_Extended;
+      Addr          : HAL.I2C.I2C_Address;
+      Mem_Addr      : HAL.UInt16;
+      Mem_Addr_Size : HAL.I2C.I2C_Memory_Address_Size;
+      Data          : out HAL.I2C.I2C_Data;
+      Status        : out HAL.I2C.I2C_Status;
+      Timeout       : Natural := 1000)
+   is
+      use RP.Timer;
+      Deadline : constant Time := RP.Timer.Clock + Milliseconds (Timeout);
+      S        : RP.I2C.I2C_Status;
+   begin
+      This.Set_Address (Addr, Status, Deadline);
+      if Status /= HAL.I2C.Ok then
+         return;
+      end if;
+
+      Write_Memory_Address (This          => This,
+                            Stop          => This.Stop_R,
+                            Data_Length   => Data'Length,
+                            Mem_Addr      => Mem_Addr,
+                            Mem_Addr_Size => Mem_Addr_Size,
+                            Deadline      => Deadline,
+                            S             => S);
+      if S /= RP.I2C.Ok then
+         Status := To_HAL_Status (S);
+         return;
+      end if;
+
+      This.Port.Start_Read (Data'Length);
+
+      for I in Data'Range loop
+         This.Port.Read (Data (I), S, Deadline);
+         if S /= RP.I2C.Ok then
+            This.Port.Clear_Error;
+            Status := To_HAL_Status (S);
+            return;
+         end if;
+      end loop;
+
+      Status := HAL.I2C.Ok;
+   end Mem_Read;
+
+   procedure Enable_Mem_Write_Stop
+     (This          : in out I2C_Master_Port_Extended) is
+   begin
+      This.Stop_W := True;
+   end Enable_Mem_Write_Stop;
+
+   procedure Disable_Mem_Write_Stop
+     (This          : in out I2C_Master_Port_Extended) is
+   begin
+      This.Stop_W := False;
+   end Disable_Mem_Write_Stop;
+
+   procedure Enable_Mem_Read_Stop
+     (This          : in out I2C_Master_Port_Extended) is
+   begin
+      This.Stop_R := True;
+   end Enable_Mem_Read_Stop;
+
+   procedure Disable_Mem_Read_Stop
+     (This          : in out I2C_Master_Port_Extended) is
+   begin
+      This.Stop_R := False;
+   end Disable_Mem_Read_Stop;
+
+   procedure Write_Memory_Address
+     (This          : in out I2C_Master_Port_Extended;
+      Stop          : Boolean;
+      Data_Length   : Positive;
+      Mem_Addr      : HAL.UInt16;
+      Mem_Addr_Size : HAL.I2C.I2C_Memory_Address_Size;
+      Deadline      : RP.Timer.Time;
+      S             : out RP.I2C.I2C_Status) is
+   begin
+      case Mem_Addr_Size is
+         when HAL.I2C.Memory_Size_8b =>
+            This.Port.Start_Write (Data_Length + 1, Stop => Stop);
+            This.Port.Write (UInt8 (Mem_Addr), S, Deadline);
+            if S /= RP.I2C.Ok then
+               This.Port.Abort_Write;
+               This.Port.Clear_Error;
+               return;
+            end if;
+         when HAL.I2C.Memory_Size_16b =>
+            This.Port.Start_Write (Data_Length + 2, Stop => Stop);
+            This.Port.Write (UInt8 (Shift_Right (Mem_Addr, 8)), S, Deadline);
+            if S /= RP.I2C.Ok then
+               This.Port.Abort_Write;
+               This.Port.Clear_Error;
+               return;
+            end if;
+            This.Port.Write (UInt8 (Mem_Addr and 16#FF#), S, Deadline);
+            if S /= RP.I2C.Ok then
+               This.Port.Abort_Write;
+               This.Port.Clear_Error;
+               return;
+            end if;
+      end case;
+   end Write_Memory_Address;
+
+end RP.I2C_Master.Extension;
